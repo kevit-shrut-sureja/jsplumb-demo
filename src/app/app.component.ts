@@ -99,7 +99,7 @@ export class AppComponent implements AfterViewInit {
       const el = document.getElementById(block.id);
       if (el) {
         const blockRect = el.getBoundingClientRect();
-        const alignedLeft = triggerCenterX - blockRect.width / 2 - boardRect.left;
+        const alignedLeft = triggerCenterX - blockRect.width / 2 - boardRect.left - 1;
         block.left = alignedLeft;
         el.style.top = `${block.top}px`;
         el.style.left = `${block.left}px`;
@@ -112,7 +112,7 @@ export class AppComponent implements AfterViewInit {
     const exitEl = document.getElementById(this.exitBlock.id);
     if (exitEl) {
       const exitRect = exitEl.getBoundingClientRect();
-      const alignedLeft = triggerCenterX - exitRect.width / 2 - boardRect.left;
+      const alignedLeft = triggerCenterX - exitRect.width / 2 - boardRect.left - 1;
       this.exitBlock.left = alignedLeft;
       exitEl.style.top = `${this.exitBlock.top}px`;
       exitEl.style.left = `${this.exitBlock.left}px`;
@@ -123,7 +123,7 @@ export class AppComponent implements AfterViewInit {
       // Align new block to trigger center after rendering (to avoid undefined width)
       const newEl = document.getElementById(newBlock.id)!;
       const newRect = newEl.getBoundingClientRect();
-      newBlock.left = triggerCenterX - newRect.width / 2 - boardRect.left;
+      newBlock.left = triggerCenterX - newRect.width / 2 - boardRect.left - 1;
       newEl.style.left = `${newBlock.left}px`;
   
       this.rebuildConnections();
@@ -183,7 +183,7 @@ export class AppComponent implements AfterViewInit {
       this.instance.setDraggable(el, false);
 
       if (callback) callback();
-    }, 10);
+    }, 5);
   }
 
   rebuildConnections() {
