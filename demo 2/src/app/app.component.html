@@ -1,4 +1,23 @@
 <div class="viewport">
-    <div #canvas class="canvas"></div>
+  <div #canvas class="canvas"></div>
+</div>
+<div class="sidebar">
+  <h3>Conditions</h3>
+  <div
+    *ngFor="let block of conditionBlocks"
+    class="draggable"
+    draggable="true"
+    (dragstart)="onDragStart($event, block)"
+  >
+    {{ block.label }}
   </div>
-  
+  <h3>Actions</h3>
+  <div
+    *ngFor="let block of actionBlocks"
+    class="draggable"
+    draggable="true"
+    (dragstart)="onDragStart($event, block)"
+  >
+    {{ block.label }}
+  </div>
+</div>

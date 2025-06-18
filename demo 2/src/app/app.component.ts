@@ -1,168 +1,121 @@
-import { Component, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  Component,
+  AfterViewInit,
+  ElementRef,
+  ViewChild,
+  OnInit,
+} from '@angular/core';
 import { newInstance, BrowserJsPlumbInstance } from '@jsplumb/browser-ui';
 import panzoom from 'panzoom';
 
 @Component({
   selector: 'app-root',
   standalone: true,
+  imports: [CommonModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-export class AppComponent implements AfterViewInit {
+export class AppComponent implements AfterViewInit, OnInit {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef;
   instance!: BrowserJsPlumbInstance;
+  actionBlocks = [
+    {
+      label: 'Send WhatsApp Template',
+      blockType: 'action',
+      blockIcon: 'c-icon-file_1',
+    },
+    { label: 'Send Email', blockType: 'action', blockIcon: 'c-icon-inbox_02' },
+    {
+      label: 'Assign to Team member',
+      blockType: 'action',
+      blockIcon: 'c-icon-users_profiles_2',
+    },
+    { label: 'Add Tag', blockType: 'action', blockIcon: 'c-icon-tag' },
+    {
+      label: 'Change Lead Stage',
+      blockType: 'action',
+      blockIcon: 'c-icon-building',
+    },
+    {
+      label: 'Create Note',
+      blockType: 'action',
+      blockIcon: 'c-icon-receipt_lines',
+    },
+    { label: 'Delay Step', blockType: 'action', blockIcon: 'c-icon-clock_1' },
+    {
+      label: 'Exit Workflow',
+      blockType: 'action',
+      blockIcon: 'c-icon-check-contained',
+    },
+  ];
+
+  conditionBlocks = [
+    {
+      label: 'Message Delivered ?',
+      blockType: 'condition',
+      blockIcon: 'c-icon-message_share',
+    },
+    {
+      label: 'Message Seen ?',
+      blockType: 'condition',
+      blockIcon: 'c-icon-message_exclamation',
+    },
+    {
+      label: 'Email Delivered ?',
+      blockType: 'condition',
+      blockIcon: 'c-icon-mail_check',
+    },
+    {
+      label: 'Email Opened ?',
+      blockType: 'condition',
+      blockIcon: 'c-icon-mail_opened',
+    },
+    {
+      label: 'Custom Condition',
+      blockType: 'condition',
+      blockIcon: 'c-icon-layout_grid_add',
+    },
+  ];
+
+  ngOnInit(): void {
+    document.addEventListener('dragstart', () => {
+      document.body.classList.add('dragging-block');
+    });
+    document.addEventListener('dragend', () => {
+      document.body.classList.remove('dragging-block');
+    });
+  }
 
   workflowData = [
     {
-      id: 'uuid1',
+      id: 'trigger1',
       workflow_id: 'workflow1',
       workspace_id: 'workspace1',
       type: 'trigger',
-      subType: 'send_mail',
+      subType: 'Trigger',
       configs: {
         source: null,
-        next_step_id: 'uuid2',
+        next_step_id: 'exit1',
       },
       created_at: '2023-10-01T00:00:00Z',
       updated_at: '2023-10-01T00:00:00Z',
     },
     {
-      id: 'uuid2',
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'action',
-      subType: 'add_tag',
-      configs: {
-        source: ['uuid1'],
-        next_step_id: 'uuid3',
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid3',
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'condition',
-      subType: 'message_delivered',
-      configs: {
-        source: ['uuid2'],
-        branch: {
-          true: 'uuid4',
-          false: 'uuid5',
-        },
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid4', // TRUE branch of first condition
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'branch',
-      subType: null,
-      configs: {
-        source: ['uuid3'],
-        next_step_id: 'uuid7', // Leads to nested condition
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid5', // FALSE branch of first condition
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'branch',
-      subType: null,
-      configs: {
-        source: ['uuid3'],
-        next_step_id: 'uuid101', // Directly to exit
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid7',
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'condition',
-      subType: 'link_clicked',
-      configs: {
-        source: ['uuid4'],
-        branch: {
-          true: 'uuid8',
-          false: 'uuid9',
-        },
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid8', // TRUE branch of nested condition
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'branch',
-      subType: null,
-      configs: {
-        source: ['uuid7'],
-        next_step_id: 'joiner1',
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid9', // FALSE branch of nested condition
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'branch',
-      subType: null,
-      configs: {
-        source: ['uuid7'],
-        next_step_id: 'joiner1',
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'joiner1', // FALSE branch of nested condition
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'joiner',
-      subType: null,
-      configs: {
-        source: ['uuid8', 'uuid9'],
-        next_step_id: 'uuid10',
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid10',
+      id: 'exit1',
       workflow_id: 'workflow1',
       workspace_id: 'workspace1',
       type: 'action',
       subType: 'exit',
       configs: {
-        source: ['uuid8', 'uuid9'],
-        next_step_id: null,
-      },
-      created_at: '2023-10-01T00:00:00Z',
-      updated_at: '2023-10-01T00:00:00Z',
-    },
-    {
-      id: 'uuid101',
-      workflow_id: 'workflow1',
-      workspace_id: 'workspace1',
-      type: 'action',
-      subType: 'exit',
-      configs: {
-        source: 'uuid5',
+        source: ['trigger1'],
         next_step_id: null,
       },
       created_at: '2023-10-01T00:00:00Z',
       updated_at: '2023-10-01T00:00:00Z',
     },
   ];
+  panzoomInstance: any;
 
   ngAfterViewInit(): void {
     this.instance = newInstance({
@@ -183,7 +136,7 @@ export class AppComponent implements AfterViewInit {
 
     this.renderWorkflow(this.workflowData);
 
-    panzoom(this.canvasRef.nativeElement, {
+    this.panzoomInstance = panzoom(this.canvasRef.nativeElement, {
       zoomSpeed: 0.065,
       maxZoom: 3,
       minZoom: 0.3,
@@ -193,110 +146,209 @@ export class AppComponent implements AfterViewInit {
 
   renderWorkflow(nodes: any[]) {
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-    const positions: Record<string, { x: number; y: number }> = {};
-    const spacingY = 200;
-    const baseX = 500;
 
-    const getPosition = (
-      nodeId: string,
-      parentX: number = baseX,
-      depth: number = 0,
-      branchDirection: 'center' | 'left' | 'right' = 'center'
-    ): { x: number; y: number } => {
-      if (positions[nodeId]) return positions[nodeId];
+    // ========== 1. Positioning Logic Starts ========== //
+    const positionWorkflowNodes = (rawNodes: any[]) => {
+      const nodes = Object.fromEntries(rawNodes.map((n) => [n.id, { ...n }]));
+      const childMap: Record<string, string[]> = {};
+      const parentMap: Record<string, string[]> = {};
 
-      const node = nodeMap.get(nodeId);
-      if (!node) return { x: parentX, y: depth * spacingY };
+      Object.values(nodes).forEach((node: any) => {
+        const id = node.id;
+        const next = node.configs?.next_step_id;
+        if (next) {
+          childMap[id] = childMap[id] || [];
+          childMap[id].push(next);
+          parentMap[next] = parentMap[next] || [];
+          parentMap[next].push(id);
+        }
 
-      // Branch offset logic
-      let offsetX = 0;
-      if (branchDirection === 'left') offsetX = -250;
-      if (branchDirection === 'right') offsetX = 250;
+        if (node.type === 'condition' && node.configs?.branch) {
+          const { true: trueBranch, false: falseBranch } = node.configs.branch;
+          if (trueBranch) {
+            childMap[id] = childMap[id] || [];
+            childMap[id].push(trueBranch);
+            parentMap[trueBranch] = parentMap[trueBranch] || [];
+            parentMap[trueBranch].push(id);
+          }
+          if (falseBranch) {
+            childMap[id] = childMap[id] || [];
+            childMap[id].push(falseBranch);
+            parentMap[falseBranch] = parentMap[falseBranch] || [];
+            parentMap[falseBranch].push(id);
+          }
+        }
+      });
 
-      const x = parentX + offsetX;
-      const y = depth * spacingY;
-      positions[nodeId] = { x, y };
+      const rootNodes = Object.values(nodes).filter(
+        (n: any) => !parentMap[n.id]
+      );
+      const positioned = new Set();
+      const layerY = 200;
+      const gapX = 300;
+      const nodeWidths: Record<string, number> = {};
+      let globalOffsetX = 0;
 
-      // Now recurse based on node type
-      if (node.type === 'condition') {
-        const trueChild = node.configs?.branch?.true;
-        const falseChild = node.configs?.branch?.false;
-        if (trueChild) getPosition(trueChild, x, depth + 1, 'left');
-        if (falseChild) getPosition(falseChild, x, depth + 1, 'right');
-      } else if (node.configs?.next_step_id) {
-        getPosition(node.configs.next_step_id, x, depth + 1, 'center');
+      function positionDFS(id: string, depth = 0, offsetX = 0): number {
+        const children = childMap[id] || [];
+
+        if (children.length === 0) {
+          nodes[id].position = { x: offsetX, y: depth * layerY };
+          nodeWidths[id] = 1;
+          positioned.add(id);
+          return 1;
+        }
+
+        let widthSum = 0;
+        const childWidths: number[] = [];
+
+        children.forEach((childId) => {
+          const w = positionDFS(childId, depth + 1, offsetX + widthSum * gapX);
+          childWidths.push(w);
+          widthSum += w;
+        });
+
+        const childXs = children.map((cid) => nodes[cid].position.x);
+        const centerX = (childXs[0] + childXs[childXs.length - 1]) / 2;
+
+        nodes[id].position = { x: centerX, y: depth * layerY };
+        nodeWidths[id] = widthSum;
+        positioned.add(id);
+        return widthSum;
       }
 
-      return positions[nodeId];
+      rootNodes.forEach((root: any, index: number) => {
+        const isTrigger = root.type === 'trigger';
+        const startX = isTrigger ? 800 : globalOffsetX; // 👈 Set your desired trigger X here
+        positionDFS(root.id, 0, startX);
+        globalOffsetX = Math.max(
+          globalOffsetX,
+          startX + nodeWidths[root.id] * gapX + gapX
+        );
+      });
+
+      Object.values(nodes).forEach((n: any) => {
+        if (!n.position) {
+          n.position = { x: globalOffsetX, y: 0 };
+          globalOffsetX += gapX;
+        }
+      });
+
+      return Object.values(nodes);
     };
 
-    // Compute positions
-    // Entry node – the trigger or root node
-    const startNode = nodes.find(
-      (n) =>
-        !Object.values(nodeMap).some(
-          (p) =>
-            p.configs?.next_step_id === n.id ||
-            p.configs?.branch?.true === n.id ||
-            p.configs?.branch?.false === n.id
-        )
+    const positionedNodes = positionWorkflowNodes(nodes);
+    const positions = Object.fromEntries(
+      positionedNodes.map((n: any) => [n.id, n.position])
     );
 
-    if (startNode) {
-      getPosition(startNode.id, baseX, 0, 'center');
-    }
+    // ========== 2. Joiner & Downstream Adjustment ========== //
+    for (const node of nodes) {
+      if (node.type === 'joiner') {
+        const [sourceA, sourceB] = node.configs.source;
+        const posA = positions[sourceA];
+        const posB = positions[sourceB];
 
-    // Step 1: Force compute all paths before we adjust the exit
-    const exitNode = nodes.find(
-      (n) => n.type === 'action' && n.subType === 'exit'
-    );
+        // Get condition this joiner relates to (could be nested)
+        const findTopmostCondition = (childId: string): any => {
+          const visited = new Set<string>();
+          let currentId = childId;
 
-    if (exitNode) {
-      const sources = exitNode.configs.source;
-      const xs = sources.map((id: string) => positions[id]?.x || 0);
-      const ys = sources.map((id: string) => positions[id]?.y || 0);
+          while (currentId && !visited.has(currentId)) {
+            visited.add(currentId);
+            const parent = nodes.find((n) => {
+              if (n.type !== 'condition') return false;
+              return (
+                n.configs.branch?.true === currentId ||
+                n.configs.branch?.false === currentId
+              );
+            });
 
-      const avgX = xs.reduce((sum: any, x: any) => sum + x, 0) / xs.length;
-      const maxY = Math.max(...ys);
+            if (parent) {
+              currentId = parent.id;
+            } else {
+              break;
+            }
+          }
 
-      for (const node of nodes) {
-        if (node.type === 'joiner') {
-          const [sourceA, sourceB] = node.configs.source;
-          const posA = positions[sourceA];
-          const posB = positions[sourceB];
+          // At this point, currentId is either the topmost condition or the original child
+          return nodes.find(
+            (n) => n.id === currentId && n.type === 'condition'
+          );
+        };
 
-          const centerX = ((posA.x + posB.x) / 2) + 60;
-          const centerY = Math.max(posA.y, posB.y) + 150;
+        const topCondition =
+          findTopmostCondition(sourceA) || findTopmostCondition(sourceB);
 
-          positions[node.id] = { x: centerX, y: centerY };
+        const centerX = topCondition
+          ? positions[topCondition.id].x
+          : (posA.x + posB.x) / 2;
+
+        const centerY = Math.max(posA.y, posB.y) + 100;
+
+        positions[node.id] = { x: centerX, y: centerY };
+
+        const visited = new Set<string>();
+        const positionDownstream = (
+          id: string,
+          parentX: number,
+          parentY: number
+        ) => {
+          if (!id || visited.has(id)) return;
+          visited.add(id);
+
+          const child = nodeMap.get(id);
+          if (!child) return;
+
+          const x = parentX;
+          const y = parentY + 150;
+          positions[id] = { x, y };
+
+          if (child.type === 'condition') {
+            const trueBranch = child.configs?.branch?.true;
+            const falseBranch = child.configs?.branch?.false;
+            if (trueBranch) positionDownstream(trueBranch, x - 250, y);
+            if (falseBranch) positionDownstream(falseBranch, x + 250, y);
+          } else if (child.configs?.next_step_id) {
+            positionDownstream(child.configs.next_step_id, x, y);
+          }
+        };
+
+        if (node.configs.next_step_id) {
+          positionDownstream(node.configs.next_step_id, centerX, centerY);
         }
       }
     }
 
-    // Render blocks
+    // ========== 3. DOM Cleanup & Rendering ========== //
+    this.canvasRef.nativeElement.innerHTML = '';
+
     for (const node of nodes) {
       const pos = positions[node.id];
       const div = document.createElement('div');
       div.id = node.id;
       div.className = 'block';
       div.style.position = 'absolute';
+
       if (node.type === 'joiner') {
-        div.style.height = '0px';
-        div.style.width = '0px';
+        div.style.height = '40px';
+        div.style.width = '40px';
         div.style.padding = '0px';
-        div.style.backgroundColor = 'transparent';
+        div.style.backgroundColor = 'black';
         div.style.color = 'transparent';
         div.style.border = 'none';
       } else {
-        div.style.height = '40px';
-        div.style.width = '100px';
-        div.style.backgroundColor = 'red';
-        div.style.color = 'white';
+        div.style.height = 'fit-content';
+        div.style.width = 'fit-content';
+        div.style.backgroundColor = 'white';
+        div.style.borderWidth = '1px';
+        div.style.borderColor = '#B2C1DA';
+        div.style.borderStyle = 'solid';
+        div.style.borderRadius = '5px';
+        div.style.color = 'black';
         div.style.padding = '10px';
+        div.style.whiteSpace = 'nowrap';
       }
-
-      div.style.left = pos.x + 'px';
-      div.style.top = pos.y + 'px';
 
       if (node.type === 'branch') {
         const parent = nodeMap.get(node.configs.source[0]);
@@ -304,75 +356,261 @@ export class AppComponent implements AfterViewInit {
           parent?.configs.branch?.true === node.id ? 'TRUE' : 'FALSE';
         div.innerText = label;
       } else {
-        div.innerText = `${node.type.toUpperCase()}${
-          node.subType ? ' (' + node.subType + ')' : ''
-        }`;
+        div.innerText = node.subType;
       }
 
       this.canvasRef.nativeElement.appendChild(div);
+    }
+
+    // New: Advanced getConditionForJoiner, designed for N-level nested conditions
+    const getConditionForJoiner = (joinerNode: any): any => {
+      const sources: string[] = joinerNode.configs?.source || [];
+      if (sources.length < 2) {
+        return null;
+      }
+
+      const sourceAId = sources[0];
+      const sourceBId = sources[1];
+
+      // Helper function to get all direct parents of a node
+      // (This 'getParents' needs to be defined in renderWorkflow's scope or passed in)
+      const getParents = (nodeId: string): string[] => {
+        const parents: string[] = [];
+        // Assuming 'nodes' array from renderWorkflow scope is accessible here
+        nodes.forEach((n: any) => {
+          if (n.configs?.next_step_id === nodeId) {
+            parents.push(n.id);
+          }
+          if (n.type === 'condition' && n.configs?.branch) {
+            if (
+              n.configs.branch.true === nodeId ||
+              n.configs.branch.false === nodeId
+            ) {
+              parents.push(n.id);
+            }
+          }
+        });
+        return parents;
+      };
+
+      // Function to collect ALL unique ancestors with their path (not just depth)
+      // This is a BFS-like traversal going upwards, recording parent chains.
+      const collectAllAncestors = (startNodeId: string): Set<string> => {
+        const ancestors = new Set<string>();
+        const queue: string[] = [startNodeId];
+        const visited = new Set<string>();
+
+        while (queue.length > 0) {
+          const currentId = queue.shift()!;
+          if (visited.has(currentId)) continue;
+          visited.add(currentId);
+
+          if (currentId !== startNodeId) {
+            // Only add true ancestors, not the starting node itself
+            ancestors.add(currentId);
+          }
+
+          const parents = getParents(currentId);
+          parents.forEach((pId) => {
+            if (!visited.has(pId)) {
+              queue.push(pId);
+            }
+          });
+        }
+        return ancestors;
+      };
+
+      const ancestorsA = collectAllAncestors(sourceAId);
+      const ancestorsB = collectAllAncestors(sourceBId);
+
+      let lowestCommonCondition: any = null;
+      let maxCommonConditionY = -Infinity; // To find the "lowest" (highest Y) common condition
+
+      // Iterate through all nodes to find common condition ancestors
+      for (const node of nodes) {
+        // Assuming 'nodes' array from renderWorkflow scope is accessible here
+        if (
+          node.type === 'condition' &&
+          ancestorsA.has(node.id) &&
+          ancestorsB.has(node.id)
+        ) {
+          const nodePos = positions[node.id]; // 'positions' map must be available here
+          if (nodePos && nodePos.y > maxCommonConditionY) {
+            maxCommonConditionY = nodePos.y;
+            lowestCommonCondition = node;
+          }
+        }
+      }
+
+      return lowestCommonCondition;
+    };
+    
+
+    // Example usage within your renderWorkflow (replacing the old findTopmostCondition logic):
+    // ... (inside renderWorkflow)
+
+    // In the "Joiner & Downstream Adjustment" section:
+    
+    for (const node of nodes) {
+      if (node.type === 'joiner') {
+        // const [sourceA, sourceB] = node.configs.source; // Not strictly needed here, as getConditionForJoiner uses it
+
+        const conditionNode = getConditionForJoiner(node); // Use the improved function
+
+        const joinerPos = positions[node.id];
+
+        if (conditionNode) {
+          const conditionPos = positions[conditionNode.id];
+
+          if (joinerPos.x !== conditionPos.x) {
+            console.log(
+              `🔁 Overriding Joiner [${node.id}] X from ${joinerPos.x} to match Condition [${conditionNode.id}] X = ${conditionPos.x}`
+            );
+            positions[node.id].x = conditionPos.x;
+
+            // Propagate this X change to downstream nodes from the joiner
+            const adjustDownstreamX = (
+              currentId: string,
+              newX: number,
+              adjustmentVisited = new Set<string>()
+            ) => {
+              if (adjustmentVisited.has(currentId)) return;
+              adjustmentVisited.add(currentId);
+
+              if (positions[currentId]) {
+                positions[currentId].x = newX;
+              }
+
+              const nodeToAdjust = nodeMap.get(currentId);
+              if (nodeToAdjust) {
+                // If it's a condition downstream, its branches might need relative adjustments
+                if (nodeToAdjust.type === 'condition') {
+                  const trueBranch = nodeToAdjust.configs?.branch?.true;
+                  const falseBranch = nodeToAdjust.configs?.branch?.false;
+                  // These offsets (e.g., -250, +250) are arbitrary and depend on your desired visual spread.
+                  // You might need to make them dynamic based on subtree widths or fixed.
+                  if (trueBranch)
+                    adjustDownstreamX(
+                      trueBranch,
+                      newX - 250,
+                      adjustmentVisited
+                    );
+                  if (falseBranch)
+                    adjustDownstreamX(
+                      falseBranch,
+                      newX + 250,
+                      adjustmentVisited
+                    );
+                } else if (nodeToAdjust.configs?.next_step_id) {
+                  adjustDownstreamX(
+                    nodeToAdjust.configs.next_step_id,
+                    newX,
+                    adjustmentVisited
+                  );
+                }
+              }
+            };
+
+            if (node.configs.next_step_id) {
+              adjustDownstreamX(
+                node.configs.next_step_id,
+                conditionPos.x,
+                new Set<string>()
+              );
+            }
+          } else {
+            console.log(
+              `✅ Joiner [${node.id}] already aligned with Condition [${conditionNode.id}] at X = ${conditionPos.x}`
+            );
+          }
+        } else {
+          console.log(
+            `⚠️ Joiner [${node.id}] at (x=${joinerPos.x}, y=${joinerPos.y}) has no associated condition`
+          );
+        }
+        // Ensure Y position is below the max of its sources, as before
+        const posA = positions[node.configs.source[0]];
+        const posB = positions[node.configs.source[1]];
+        positions[node.id].y = Math.max(posA.y, posB.y) + 150;
+      }
+    }
+
+    for (const node of nodes) {
+      const div = document.getElementById(node.id)!;
+      const rect = div.getBoundingClientRect();
+      const parentRect = this.canvasRef.nativeElement.getBoundingClientRect();
+      const { x, y } = positions[node.id];
+
+      div.style.left = `${x - rect.width / 2 - (parentRect.left - 10)}px`;
+      div.style.top = `${y}px`;
       this.instance.manage(div);
     }
 
-    console.log(nodes);
-    // Step 2: Create connections
+    // ========== 4. Connectors with Deduplication ========== //
+    const addedEdges = new Set<string>(); // Track edges: `${sourceId}-->${targetId}`
+
+    const addConnection = (
+      sourceId: string,
+      targetId: string,
+      anchors: [any, any],
+      overlays: any[] = []
+    ) => {
+      const key = `${sourceId}-->${targetId}`;
+      if (addedEdges.has(key)) return;
+      addedEdges.add(key);
+
+      this.instance.connect({
+        source: document.getElementById(sourceId)!,
+        target: document.getElementById(targetId)!,
+        anchors,
+        overlays,
+      });
+    };
+
     for (const node of nodes) {
       if (node.type === 'condition') {
-        // TRUE
-        this.instance.connect({
-          source: document.getElementById(node.id)!,
-          target: document.getElementById(node.configs.branch.true)!,
-          anchors: ['Bottom', 'Right'],
-        });
-    
-        // FALSE
-        this.instance.connect({
-          source: document.getElementById(node.id)!,
-          target: document.getElementById(node.configs.branch.false)!,
-          anchors: ['Bottom', 'Left'],
-        });
+        addConnection(node.id, node.configs.branch.true, ['Bottom', 'Right']);
+        addConnection(node.id, node.configs.branch.false, ['Bottom', 'Left']);
       } else if (node.type === 'joiner') {
         const [sourceA, sourceB] = node.configs.source;
-    
-        // sourceA → joiner (with +)
-        this.instance.connect({
-          source: document.getElementById(sourceA)!,
-          target: document.getElementById(node.id)!,
-          anchors: ['Bottom', 'Left'],
-          overlays: [this.createPlusOverlay(sourceA)],
-        });
-    
-        // sourceB → joiner (with +)
-        this.instance.connect({
-          source: document.getElementById(sourceB)!,
-          target: document.getElementById(node.id)!,
-          anchors: ['Bottom', 'Right'],
-          overlays: [this.createPlusOverlay(sourceB)],
-        });
-    
-        // joiner → next (with +)
+        addConnection(
+          sourceA,
+          node.id,
+          ['Bottom', 'Left'],
+          [this.createPlusOverlay(sourceA)]
+        );
+        addConnection(
+          sourceB,
+          node.id,
+          ['Bottom', 'Right'],
+          [this.createPlusOverlay(sourceB)]
+        );
+
         if (node.configs.next_step_id) {
-          this.instance.connect({
-            source: document.getElementById(node.id)!,
-            target: document.getElementById(node.configs.next_step_id)!,
-            anchors: ['Bottom', 'Top'],
-            overlays: [this.createPlusOverlay(node.id)],
-          });
+          addConnection(
+            node.id,
+            node.configs.next_step_id,
+            ['Bottom', 'Top'],
+            [this.createPlusOverlay(node.id)]
+          );
         }
       } else if (
         node.configs.next_step_id &&
         nodeMap.get(node.configs.next_step_id)?.type !== 'joiner'
       ) {
         const shouldShowPlus = node.type !== 'condition';
-    
-        this.instance.connect({
-          source: document.getElementById(node.id)!,
-          target: document.getElementById(node.configs.next_step_id)!,
-          anchors: ['Bottom', 'Top'],
-          overlays: shouldShowPlus ? [this.createPlusOverlay(node.id)] : [],
-        });
+        addConnection(
+          node.id,
+          node.configs.next_step_id,
+          ['Bottom', 'Top'],
+          shouldShowPlus ? [this.createPlusOverlay(node.id)] : []
+        );
       }
     }
-    
+  }
+
+  onDragStart(event: DragEvent, block: any) {
+    event.dataTransfer?.setData('text', JSON.stringify(block));
   }
 
   createPlusOverlay(sourceId: string) {
@@ -380,25 +618,254 @@ export class AppComponent implements AfterViewInit {
       type: 'Custom',
       options: {
         create: () => {
+          // Create wrapper div
+          const wrapper = document.createElement('div');
+          wrapper.style.width = '249px';
+          wrapper.style.height = '66px';
+          wrapper.style.borderRadius = '5px';
+          wrapper.style.display = 'flex';
+          wrapper.style.justifyContent = 'center';
+          wrapper.style.alignItems = 'center';
+          wrapper.style.pointerEvents = 'auto';
+          wrapper.style.transition = 'all 0.2s ease';
+          wrapper.style.background = 'transparent';
+          wrapper.style.border = '1px dashed transparent';
+
+          // Create + button
           const btn = document.createElement('button');
           btn.innerText = '+';
-          btn.style.background = 'green';
-          btn.style.color = 'white';
           btn.style.border = 'none';
           btn.style.borderRadius = '50%';
-          btn.style.width = '20px';
-          btn.style.height = '20px';
           btn.style.cursor = 'pointer';
+          btn.style.zIndex = '1';
+          btn.style.fontWeight = '700';
+          btn.style.fontSize = '28px';
+          btn.style.background = '#edf1f6'; // original background
+          btn.style.color = '#B2C1DA'; // initial color
+
+          // Pulse animation support
+          const interval = setInterval(() => {
+            const isDragging =
+              document.body.classList.contains('dragging-block');
+            btn.style.color = isDragging ? '#5b6b87' : '#B2C1DA';
+            if (isDragging) {
+              btn.classList.add('pulse-button');
+            } else {
+              btn.classList.remove('pulse-button');
+            }
+          }, 50);
+
+          btn.onmouseleave = () => clearInterval(interval); // cleanup
+
+          // Optional click handler
           btn.onclick = (e) => {
             e.stopPropagation();
             console.log('Clicked plus on connector from', sourceId);
           };
-          return btn;
+
+          // Handle drag over
+          wrapper.ondragover = (e) => {
+            e.preventDefault();
+            wrapper.style.background = '#FAEBFF';
+            wrapper.style.borderColor = '#a855f7';
+            btn.style.background = 'transparent'; // change on dragover
+          };
+
+          // Handle drag leave
+          wrapper.ondragleave = () => {
+            wrapper.style.background = 'transparent';
+            wrapper.style.borderColor = 'transparent';
+            btn.style.background = '#edf1f6'; // restore original
+          };
+
+          // Handle drop
+          wrapper.ondrop = (e) => {
+            e.preventDefault();
+            wrapper.style.background = 'transparent';
+            wrapper.style.borderColor = 'transparent';
+            btn.style.background = '#edf1f6'; // reset button bg on drop
+
+            const droppedData = JSON.parse(e.dataTransfer!.getData('text'));
+            this.handleDropOnPlus(sourceId, droppedData);
+          };
+
+          wrapper.appendChild(btn);
+          return wrapper;
         },
         location: 0.5,
         id: 'plus',
       },
     };
   }
-  
+
+  handleDropOnPlus(sourceId: string, droppedBlock: any) {
+    const timestamp = Date.now();
+    const workflow_id = 'workflow1';
+    const workspace_id = 'workspace1';
+    const now = new Date().toISOString();
+
+    const sourceNode = this.workflowData.find((n) => n.id === sourceId);
+    const previousTargetId = sourceNode?.configs?.next_step_id || null;
+
+    const isBranch = sourceNode?.type === 'branch';
+
+    if (droppedBlock.blockType === 'condition') {
+      const conditionId = 'uuid' + timestamp;
+      const trueBranchId = 'uuid' + (timestamp + 1);
+      const falseBranchId = 'uuid' + (timestamp + 2);
+      const nestedJoinerId = 'joiner' + timestamp;
+
+      // Create condition block
+      const conditionBlock: any = {
+        id: conditionId,
+        workflow_id,
+        workspace_id,
+        type: 'condition',
+        subType: droppedBlock.label,
+        configs: {
+          source: [sourceId],
+          branch: {
+            true: trueBranchId,
+            false: falseBranchId,
+          },
+        },
+        created_at: now,
+        updated_at: now,
+      };
+
+      // Create true branch block
+      const trueBranchBlock: any = {
+        id: trueBranchId,
+        workflow_id,
+        workspace_id,
+        type: 'branch',
+        subType: null,
+        configs: {
+          source: [conditionId],
+          next_step_id: nestedJoinerId,
+        },
+        created_at: now,
+        updated_at: now,
+      };
+
+      // Create false branch block
+      const falseBranchBlock: any = {
+        id: falseBranchId,
+        workflow_id,
+        workspace_id,
+        type: 'branch',
+        subType: null,
+        configs: {
+          source: [conditionId],
+          next_step_id: nestedJoinerId,
+        },
+        created_at: now,
+        updated_at: now,
+      };
+
+      // Create nested joiner block
+      const joinerBlock: any = {
+        id: nestedJoinerId,
+        workflow_id,
+        workspace_id,
+        type: 'joiner',
+        subType: null,
+        configs: {
+          source: [trueBranchId, falseBranchId],
+          next_step_id: previousTargetId,
+        },
+        created_at: now,
+        updated_at: now,
+      };
+
+      // Update sourceNode to point to new condition block
+      if (sourceNode) {
+        sourceNode.configs.next_step_id = conditionId;
+      }
+
+      // If the previous target existed, update its source
+      const previousTargetNode = this.workflowData.find(
+        (n) => n.id === previousTargetId
+      );
+
+      if (previousTargetNode?.configs?.source) {
+        previousTargetNode.configs.source =
+          previousTargetNode.configs.source.map((src: string) =>
+            src === sourceId ? nestedJoinerId : src
+          );
+      }
+
+      this.workflowData.push(
+        conditionBlock,
+        trueBranchBlock,
+        falseBranchBlock,
+        joinerBlock
+      );
+    } else {
+      // Insert normal action or delay block
+      const newId = 'uuid' + timestamp;
+      const newBlock: any = {
+        id: newId,
+        workflow_id,
+        workspace_id,
+        type: droppedBlock.blockType,
+        subType: droppedBlock.label,
+        configs: {
+          source: [sourceId],
+          next_step_id: previousTargetId,
+        },
+        created_at: now,
+        updated_at: now,
+      };
+
+      if (sourceNode) {
+        sourceNode.configs.next_step_id = newId;
+      }
+
+      // Fix source of next node
+      const previousTargetNode = this.workflowData.find(
+        (n) => n.id === previousTargetId
+      );
+      if (previousTargetNode?.configs?.source) {
+        previousTargetNode.configs.source =
+          previousTargetNode.configs.source.map((src: string) =>
+            src === sourceId ? newId : src
+          );
+      }
+
+      this.workflowData.push(newBlock);
+    }
+
+    setTimeout(() => {
+      this.clearCanvas();
+      this.renderWorkflow(this.workflowData);
+    }, 50);
+  }
+
+  clearCanvas() {
+    const canvas = this.canvasRef.nativeElement;
+
+    // Capture the current pan/zoom transform
+    const transform = canvas.style.transform;
+
+    // Clear jsPlumb and canvas children
+    while (canvas.firstChild) {
+      canvas.removeChild(canvas.firstChild);
+    }
+    this.instance.reset();
+
+    // Restore panzoom transform
+    canvas.style.transform = transform;
+  }
+
+  getAllEdgesDetailed(): any[] {
+    const connections = this.instance.getConnections() as any[];
+
+    return connections.map((conn: any) => ({
+      sourceId: conn.sourceId,
+      targetId: conn.targetId,
+      anchors: conn.endpoints.map((ep: any) => ep.anchor?.type),
+      overlays: Object.keys(conn.getOverlays?.() || {}),
+    }));
+  }
 }
