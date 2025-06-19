@@ -98,6 +98,7 @@ export class AppComponent implements AfterViewInit, OnInit {
         source: null,
         next_step_id: 'exit1',
       },
+      position: { x: 800, y: 0 },
       created_at: '2023-10-01T00:00:00Z',
       updated_at: '2023-10-01T00:00:00Z',
     },
@@ -111,6 +112,7 @@ export class AppComponent implements AfterViewInit, OnInit {
         source: ['trigger1'],
         next_step_id: null,
       },
+      position: { x: 800, y: 200 },
       created_at: '2023-10-01T00:00:00Z',
       updated_at: '2023-10-01T00:00:00Z',
     },
@@ -231,6 +233,14 @@ export class AppComponent implements AfterViewInit, OnInit {
         if (!n.position) {
           n.position = { x: globalOffsetX, y: 0 };
           globalOffsetX += gapX;
+        }
+      });
+
+      // ✅ Write back final position to original workflowData
+      Object.values(nodes).forEach((n: any) => {
+        const original = rawNodes.find((r) => r.id === n.id);
+        if (original) {
+          original.position = n.position;
         }
       });
 
@@ -444,13 +454,12 @@ export class AppComponent implements AfterViewInit, OnInit {
 
       return lowestCommonCondition;
     };
-    
 
     // Example usage within your renderWorkflow (replacing the old findTopmostCondition logic):
     // ... (inside renderWorkflow)
 
     // In the "Joiner & Downstream Adjustment" section:
-    
+
     for (const node of nodes) {
       if (node.type === 'joiner') {
         // const [sourceA, sourceB] = node.configs.source; // Not strictly needed here, as getConditionForJoiner uses it
@@ -607,6 +616,35 @@ export class AppComponent implements AfterViewInit, OnInit {
         );
       }
     }
+
+    // ✅ Final alignment: snap all joiners to the X of their condition
+    for (const node of nodes) {
+      if (node.type === 'joiner') {
+        const conditionNode = getConditionForJoiner(node);
+        if (conditionNode) {
+          const joinerPos = positions[node.id];
+          const conditionPos = positions[conditionNode.id];
+          if (joinerPos.x !== conditionPos.x) {
+            positions[node.id].x = conditionPos.x;
+
+            // Update the DOM position immediately
+            const div = document.getElementById(node.id);
+            if (div) {
+              const rect = div.getBoundingClientRect();
+              const parentRect =
+                this.canvasRef.nativeElement.getBoundingClientRect();
+              div.style.left = `${
+                conditionPos.x - rect.width / 2 - (parentRect.left - 10)
+              }px`;
+            }
+          }
+        }
+      }
+    }
+    setTimeout(() => {
+      this.instance.repaintEverything();
+    }, 0);
+    console.log(this.workflowData);
   }
 
   onDragStart(event: DragEvent, block: any) {
