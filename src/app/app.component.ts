@@ -181,7 +181,6 @@ export class AppComponent implements AfterViewInit, OnInit {
           }
         }
       });
-
       const rootNodes = Object.values(nodes).filter(
         (n: any) => !parentMap[n.id]
       );
@@ -621,30 +620,122 @@ export class AppComponent implements AfterViewInit, OnInit {
     for (const node of nodes) {
       if (node.type === 'joiner') {
         const conditionNode = getConditionForJoiner(node);
+        const joinerPos = positions[node.id];
+    
         if (conditionNode) {
-          const joinerPos = positions[node.id];
           const conditionPos = positions[conditionNode.id];
           if (joinerPos.x !== conditionPos.x) {
             positions[node.id].x = conditionPos.x;
-
-            // Update the DOM position immediately
+    
+            // ✅ Update DOM position for joiner
             const div = document.getElementById(node.id);
             if (div) {
               const rect = div.getBoundingClientRect();
-              const parentRect =
-                this.canvasRef.nativeElement.getBoundingClientRect();
-              div.style.left = `${
-                conditionPos.x - rect.width / 2 - (parentRect.left - 10)
-              }px`;
+              const parentRect = this.canvasRef.nativeElement.getBoundingClientRect();
+              div.style.left = `${conditionPos.x - rect.width / 2 - (parentRect.left - 10)}px`;
             }
           }
         }
+    
+        // ✅ Now align next block using new joiner X
+        const nextId = node.configs?.next_step_id;
+        const nextNode = nodeMap.get(nextId);
+        if (nextId && nextNode?.type !== 'joiner') {
+          const nextY = positions[node.id].y + 200;
+          if (nextNode.type === 'condition') {
+            positions[nextId] = { x: positions[node.id].x, y: nextY };
+    
+            // TRUE/FALSE branches
+            const trueId = nextNode.configs?.branch?.true;
+            const falseId = nextNode.configs?.branch?.false;
+    
+            if (trueId) {
+              positions[trueId] = { x: positions[nextId].x - 250, y: nextY + 200 };
+            }
+            if (falseId) {
+              positions[falseId] = { x: positions[nextId].x + 250, y: nextY + 200 };
+            }
+          } else {
+            // Linear block (action, etc.)
+            positions[nextId] = { x: positions[node.id].x, y: nextY };
+          }
+        }
+            const div = document.getElementById(nextId);
+    if (div) {
+      const rect = div.getBoundingClientRect();
+      const parentRect = this.canvasRef.nativeElement.getBoundingClientRect();
+      div.style.left = `${positions[nextId].x - rect.width / 2 - (parentRect.left - 10)}px`;
+      div.style.top = `${positions[nextId].y}px`;
+    }
+    
       }
     }
+    
+
+    // ✅ Final pass: Push joiner's X to its immediate non-joiner next block
+    const positionSubTreeFrom = (startId: string, parentX: number, parentY: number): number => {
+      const visited = new Set<string>();
+    
+      const dfs = (id: string, x: number, y: number): number => {
+        if (visited.has(id)) return 0;
+        visited.add(id);
+    
+        const node = nodeMap.get(id);
+        if (!node) return 0;
+    
+        positions[id] = { x, y };
+    
+        if (node.type === 'condition') {
+          const trueId = node.configs?.branch?.true;
+          const falseId = node.configs?.branch?.false;
+          const nextY = y + 200;
+          let width = 0;
+    
+          if (trueId) {
+            const w = dfs(trueId, x - 250, nextY);
+            width += w;
+          }
+          if (falseId) {
+            const w = dfs(falseId, x + 250, nextY);
+            width += w;
+          }
+    
+          return Math.max(width, 1);
+        } else if (node.configs?.next_step_id) {
+          const nextId = node.configs.next_step_id;
+          const nextNode = nodeMap.get(nextId);
+    
+          // 🛑 Stop layout if next is another joiner
+          if (nextNode?.type === 'joiner') return 0;
+    
+          return dfs(nextId, x, y + 200);
+        }
+    
+        return 1;
+      };
+    
+      return dfs(startId, parentX, parentY + 200);
+    };
+    
+    
+    
+    // Apply reflow from each joiner's next step (only if it's NOT another joiner)
+    for (const node of nodes) {
+      if (node.type === 'joiner' && node.configs?.next_step_id) {
+        const nextId = node.configs.next_step_id;
+        const nextNode = nodeMap.get(nextId);
+    
+        if (nextNode?.type !== 'joiner') {
+          const joinerPos = positions[node.id];
+          positionSubTreeFrom(nextId, joinerPos.x, joinerPos.y);
+        }
+      }
+    }
+    
+  
     setTimeout(() => {
       this.instance.repaintEverything();
-    }, 0);
-    console.log(this.workflowData);
+    }, 0)
   }
 
   onDragStart(event: DragEvent, block: any) {
